@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>CodeCook.io &#124; Blog &#187; settings</title>
+	<atom:link href="/tag/settings/feed/" rel="self" type="application/rss+xml" />
+	<link></link>
+	<description>Code templates in any language</description>
+	<lastBuildDate>Sun, 04 Oct 2015 16:18:53 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+	<generator>http://wordpress.org/?v=272</generator>
+	<item>
+		<title>Setting your Django settings</title>
+		<link>/2015/10/setting-your-django-settings/</link>
+		<comments>/2015/10/setting-your-django-settings/#comments</comments>
+		<pubDate>Sun, 04 Oct 2015 15:47:42 +0000</pubDate>
+		<dc:creator><![CDATA[rmoelker]]></dc:creator>
+				<category><![CDATA[Tutorial]]></category>
+		<category><![CDATA[django]]></category>
+		<category><![CDATA[settings]]></category>
+
+		<guid isPermaLink="false">/?p=112</guid>
+		<description><![CDATA[The Django web framework is great. Initial setup is quick and easy. The settings file however can become a bit unwieldy as soon as you are having to deal with multiple environments and multiple developers. Also a important issue that is not provided out of the box, keeping sensitive data (keys &#38; passwords) out of source control. We like to help you along by sharing some of our experiences. We&#8217;ll walk you through.. <a href="/2015/10/setting-your-django-settings/">Read More</a>]]></description>
+				<content:encoded><![CDATA[<p>The Django web framework is great. Initial setup is quick and easy. The settings file however can become a bit unwieldy as soon as you are having to deal with multiple environments and multiple developers. Also a important issue that is not provided out of the box, keeping sensitive data (keys &amp; passwords) out of source control. We like to help you along by sharing some of our experiences.</p>
+<p><span id="more-112"></span></p>
+<p>We&#8217;ll walk you through the changes needed to get a great setup. If however you just want your setup to work, skip to the end to see the resulting code.</p>
+<h2>Local and production settings</h2>
+<p>You’ve gotten to the stage where locally the website is running great. And now you want to use it in production. This means you probably have a separate configuration for your:</p>
+<ul>
+<li>database</li>
+<li>logging</li>
+<li>email server</li>
+<li>caching server</li>
+</ul>
+<p>Django <strong>settings.py</strong> file does not support different environments out of the box so we are left to our own devices. There are two straightforward ways of supporting multiple configurations.</p>
+<ol>
+<li>Define a variable <strong><em>ENVIRONMENT</em></strong>` in the settings file and conditionally set variables based on the value.</li>
+<li>Have multiple configuration files sharing a common setup.</li>
+</ol>
+<p>Both setups have their merits but we prefer multiple configuration files because it is easier to read and maintain.</p>
+<p>&nbsp;</p>
+<h3>Split settings</h3>
+<p>The minimal setup we want to have is as follows:</p>
+<ul>
+<li><strong>settings.py</strong>: Common settings for both local and production.</li>
+<li><strong>settings_production.py</strong>: Production only configuration.</li>
+<li><strong>settings_development.py</strong> : Developer machines settings.</li>
+</ul>
+<p>All of these setting files live in the project root folder (for now). As an example this should suffice. You might want to go all out and also have a <strong>Test</strong> and <strong>Acceptance</strong> file so you have the full <a title="DTAP setup" href="https://en.wikipedia.org/wiki/Development,_testing,_acceptance_and_production" target="_blank">DTAP setup</a>.</p>
+<p>&nbsp;</p>
+<h3>Configuration inheritance</h3>
+<p>Both the developer and production settings should have the entire configuration defined in <strong>settings.py</strong>. Because the settings files are python scripts this is actually remarkably easy using an import statement. Both the production and development file should start with:</p>
+<pre><code></code><code>from settings import *</code><code></code></pre>
+<p>So <strong>settings_production.py</strong> contains:</p>
+<pre><code>from settings import *
+DEBUG = False</code></pre>
+<p>And <strong>settings_development.py</strong> starts out:</p>
+<pre><code>from settings import *</code>
+<code>DEBUG = True</code><code></code></pre>
+<p>&nbsp;</p>
+<h3>Django, manage it</h3>
+<p>These bits of codes are almost enough. You’ll also need to specify that we no longer want to use just the <strong>settings.py</strong> file when executing Django commands or running the server. For this we’ll edit the <strong>manage.py</strong> file. Change the line:</p>
+<pre><code>os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myApp.settings")</code>
+<code></code></pre>
+<p>to</p>
+<pre><code>os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myApp.settings_production")</code>
+<code></code></pre>
+<p>Where the value depends on the environment you are working on. On the production machine you’ll probably also want to change the <strong>wsgi.py</strong> file so it references the <em><strong>production</strong></em> file rather than the standard settings file. The procedure is the same as for the <strong>manage.py</strong> file.</p>
+<p>&nbsp;</p>
+<h2>Settings directory</h2>
+<p>Although everything up to this point should be enough to deal with multiple environments it’s a bit clunky. The project root folder is littered with settings files, per system the <strong>manage.py</strong> file needs adjustment and configuration secrets are still scattered throughout the files.</p>
+<p>Let us start off by putting the setting files in their own directory. Such that the end result looks like:</p>
+<ul>
+<li>Project root
+<ul>
+<li>manage.py</li>
+<li>myApp
+<ul>
+<li>wsgi.py</li>
+<li>settings
+<ul>
+<li>__init__.py</li>
+<li>settings.py</li>
+<li>settings_production.py</li>
+<li>settings_development.py</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>&nbsp;</p>
+<p>Remember to add the directory sub path to <em><strong>DJANGO_SETTINGS_MODULE</strong></em> for both <strong>manage.py</strong> and <strong>wsgi.py</strong>.</p>
+<p>Finally the settings file probably has a <em><strong>BASE_DIR</strong></em> variable. This value should point to the parent directory. Change it to:</p>
+<pre><code>BASE_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir)</code><code>
+</code></pre>
+<p>&nbsp;</p>
+<h3>Keeping your system DRY</h3>
+<p>This last bit is really icing on the cake. At this point in time both <strong>manage.py</strong> and <strong>wsgi.py</strong> have a hard coded path to the settings file for that environment. Well that’s not very nice… Lets extract that bit to another file that we exclude from our source control.</p>
+<p>In both <strong>manage.py</strong> and <strong>wsgi.py</strong> replace the line</p>
+<pre><code>os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myApp.settings.settings_development")</code><code></code></pre>
+<p>by</p>
+<pre><code>settings_module_path = 'myApp.settings.settings_production`</code>
+<code>try:</code>
+<code>  from settings_path import *</code>
+<code>except ImportError:</code>
+<code>  pass</code>
+<code>os.environ['DJANGO_SETTINGS_MODULE'] = settings_module_path</code>
+<code></code></pre>
+<p>&nbsp;</p>
+<p>Next create a file <strong>settings_path.py </strong>and add the line:</p>
+<pre><code>settings_module_path = 'myApp.settings.settings_development`</code>
+<code></code></pre>
+<p>These changes will use the production settings unless the <strong>settings_path.py</strong> says otherwise. Now you might change the default. But for us it makes sense to have as many safeguards in place that we don’t accidentally have <code>Debug = True</code> setup on production because a file is missing.</p>
+<p>&nbsp;</p>
+<h2>pssst, secrets ahead</h2>
+<p>Chances are you’ve uploaded the application <em><strong>SECRET_KEY</strong></em> to some source control system. While easy, it doesn’t really seem safe now does it? But don’t take it from us, take it from the Django devs themselves:</p>
+<blockquote><p>Warning<br />
+<b>Keep this value secret.<br />
+</b>Running Django with a known<a href="https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-SECRET_KEY"> SECRET_KEY</a> defeats many of Django’s security protections, and can lead to privilege escalation and remote code execution vulnerabilities.</p></blockquote>
+<p>&#8212; <a title="Django documentation" href="https://docs.djangoproject.com/en/1.8/ref/settings/#secret-key">Django documentation</a></p>
+<p>We can put the sensitive settings information in a different file just like all the other things up till now. Create a file <strong>settings/settings_secret.py</strong> with the content:</p>
+<pre><code>SECRET_KEY = ‘ABCD123456FGHI’</code></pre>
+<p>Now in your <strong>settings/settings.py</strong> file add the line</p>
+<pre><code>from settings_secret import *</code><code></code></pre>
+<p>Exclude the secret file from your source control (and possibly delete it from the history). Now you have a place to put your application credentials.</p>
+<p>&nbsp;</p>
+<h2>Concluding</h2>
+<p>Your once so simple single file setup has been changed to a myriad of files. But it should be easier to maintain, more secure and is better suited to deal with multiple environments. Just to have everything in one place. Here is a demo project with all the tricks mentioned above:</p>
+<p><a href="/wp-content/uploads/2015/10/settings_demo_app.zip">settings_demo_app.zip</a></p>
+]]></content:encoded>
+			<wfw:commentRss>/2015/10/setting-your-django-settings/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+		</item>
+	</channel>
+</rss>
+
+<!-- Performance optimized by W3 Total Cache. Learn more: http://www.w3-edge.com/wordpress-plugins/
+
+Page Caching using disk: enhanced
+Database Caching using disk
+Object Caching 308/398 objects using disk
+
+ Served from: blog.codecook.io @ 2016-10-13 18:56:16 by W3 Total Cache -->

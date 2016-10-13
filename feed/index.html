@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>CodeCook.io &#124; Blog</title>
+	<atom:link href="/feed/" rel="self" type="application/rss+xml" />
+	<link></link>
+	<description>Code templates in any language</description>
+	<lastBuildDate>Sun, 04 Oct 2015 16:18:53 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+	<generator>http://wordpress.org/?v=241</generator>
+	<item>
+		<title>Setting your Django settings</title>
+		<link>/2015/10/setting-your-django-settings/</link>
+		<comments>/2015/10/setting-your-django-settings/#comments</comments>
+		<pubDate>Sun, 04 Oct 2015 15:47:42 +0000</pubDate>
+		<dc:creator><![CDATA[rmoelker]]></dc:creator>
+				<category><![CDATA[Tutorial]]></category>
+		<category><![CDATA[django]]></category>
+		<category><![CDATA[settings]]></category>
+
+		<guid isPermaLink="false">/?p=112</guid>
+		<description><![CDATA[The Django web framework is great. Initial setup is quick and easy. The settings file however can become a bit unwieldy as soon as you are having to deal with multiple environments and multiple developers. Also a important issue that is not provided out of the box, keeping sensitive data (keys &#38; passwords) out of source control. We like to help you along by sharing some of our experiences. We&#8217;ll walk you through.. <a href="/2015/10/setting-your-django-settings/">Read More</a>]]></description>
+				<content:encoded><![CDATA[<p>The Django web framework is great. Initial setup is quick and easy. The settings file however can become a bit unwieldy as soon as you are having to deal with multiple environments and multiple developers. Also a important issue that is not provided out of the box, keeping sensitive data (keys &amp; passwords) out of source control. We like to help you along by sharing some of our experiences.</p>
+<p><span id="more-112"></span></p>
+<p>We&#8217;ll walk you through the changes needed to get a great setup. If however you just want your setup to work, skip to the end to see the resulting code.</p>
+<h2>Local and production settings</h2>
+<p>You’ve gotten to the stage where locally the website is running great. And now you want to use it in production. This means you probably have a separate configuration for your:</p>
+<ul>
+<li>database</li>
+<li>logging</li>
+<li>email server</li>
+<li>caching server</li>
+</ul>
+<p>Django <strong>settings.py</strong> file does not support different environments out of the box so we are left to our own devices. There are two straightforward ways of supporting multiple configurations.</p>
+<ol>
+<li>Define a variable <strong><em>ENVIRONMENT</em></strong>` in the settings file and conditionally set variables based on the value.</li>
+<li>Have multiple configuration files sharing a common setup.</li>
+</ol>
+<p>Both setups have their merits but we prefer multiple configuration files because it is easier to read and maintain.</p>
+<p>&nbsp;</p>
+<h3>Split settings</h3>
+<p>The minimal setup we want to have is as follows:</p>
+<ul>
+<li><strong>settings.py</strong>: Common settings for both local and production.</li>
+<li><strong>settings_production.py</strong>: Production only configuration.</li>
+<li><strong>settings_development.py</strong> : Developer machines settings.</li>
+</ul>
+<p>All of these setting files live in the project root folder (for now). As an example this should suffice. You might want to go all out and also have a <strong>Test</strong> and <strong>Acceptance</strong> file so you have the full <a title="DTAP setup" href="https://en.wikipedia.org/wiki/Development,_testing,_acceptance_and_production" target="_blank">DTAP setup</a>.</p>
+<p>&nbsp;</p>
+<h3>Configuration inheritance</h3>
+<p>Both the developer and production settings should have the entire configuration defined in <strong>settings.py</strong>. Because the settings files are python scripts this is actually remarkably easy using an import statement. Both the production and development file should start with:</p>
+<pre><code></code><code>from settings import *</code><code></code></pre>
+<p>So <strong>settings_production.py</strong> contains:</p>
+<pre><code>from settings import *
+DEBUG = False</code></pre>
+<p>And <strong>settings_development.py</strong> starts out:</p>
+<pre><code>from settings import *</code>
+<code>DEBUG = True</code><code></code></pre>
+<p>&nbsp;</p>
+<h3>Django, manage it</h3>
+<p>These bits of codes are almost enough. You’ll also need to specify that we no longer want to use just the <strong>settings.py</strong> file when executing Django commands or running the server. For this we’ll edit the <strong>manage.py</strong> file. Change the line:</p>
+<pre><code>os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myApp.settings")</code>
+<code></code></pre>
+<p>to</p>
+<pre><code>os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myApp.settings_production")</code>
+<code></code></pre>
+<p>Where the value depends on the environment you are working on. On the production machine you’ll probably also want to change the <strong>wsgi.py</strong> file so it references the <em><strong>production</strong></em> file rather than the standard settings file. The procedure is the same as for the <strong>manage.py</strong> file.</p>
+<p>&nbsp;</p>
+<h2>Settings directory</h2>
+<p>Although everything up to this point should be enough to deal with multiple environments it’s a bit clunky. The project root folder is littered with settings files, per system the <strong>manage.py</strong> file needs adjustment and configuration secrets are still scattered throughout the files.</p>
+<p>Let us start off by putting the setting files in their own directory. Such that the end result looks like:</p>
+<ul>
+<li>Project root
+<ul>
+<li>manage.py</li>
+<li>myApp
+<ul>
+<li>wsgi.py</li>
+<li>settings
+<ul>
+<li>__init__.py</li>
+<li>settings.py</li>
+<li>settings_production.py</li>
+<li>settings_development.py</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>&nbsp;</p>
+<p>Remember to add the directory sub path to <em><strong>DJANGO_SETTINGS_MODULE</strong></em> for both <strong>manage.py</strong> and <strong>wsgi.py</strong>.</p>
+<p>Finally the settings file probably has a <em><strong>BASE_DIR</strong></em> variable. This value should point to the parent directory. Change it to:</p>
+<pre><code>BASE_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir)</code><code>
+</code></pre>
+<p>&nbsp;</p>
+<h3>Keeping your system DRY</h3>
+<p>This last bit is really icing on the cake. At this point in time both <strong>manage.py</strong> and <strong>wsgi.py</strong> have a hard coded path to the settings file for that environment. Well that’s not very nice… Lets extract that bit to another file that we exclude from our source control.</p>
+<p>In both <strong>manage.py</strong> and <strong>wsgi.py</strong> replace the line</p>
+<pre><code>os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myApp.settings.settings_development")</code><code></code></pre>
+<p>by</p>
+<pre><code>settings_module_path = 'myApp.settings.settings_production`</code>
+<code>try:</code>
+<code>  from settings_path import *</code>
+<code>except ImportError:</code>
+<code>  pass</code>
+<code>os.environ['DJANGO_SETTINGS_MODULE'] = settings_module_path</code>
+<code></code></pre>
+<p>&nbsp;</p>
+<p>Next create a file <strong>settings_path.py </strong>and add the line:</p>
+<pre><code>settings_module_path = 'myApp.settings.settings_development`</code>
+<code></code></pre>
+<p>These changes will use the production settings unless the <strong>settings_path.py</strong> says otherwise. Now you might change the default. But for us it makes sense to have as many safeguards in place that we don’t accidentally have <code>Debug = True</code> setup on production because a file is missing.</p>
+<p>&nbsp;</p>
+<h2>pssst, secrets ahead</h2>
+<p>Chances are you’ve uploaded the application <em><strong>SECRET_KEY</strong></em> to some source control system. While easy, it doesn’t really seem safe now does it? But don’t take it from us, take it from the Django devs themselves:</p>
+<blockquote><p>Warning<br />
+<b>Keep this value secret.<br />
+</b>Running Django with a known<a href="https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-SECRET_KEY"> SECRET_KEY</a> defeats many of Django’s security protections, and can lead to privilege escalation and remote code execution vulnerabilities.</p></blockquote>
+<p>&#8212; <a title="Django documentation" href="https://docs.djangoproject.com/en/1.8/ref/settings/#secret-key">Django documentation</a></p>
+<p>We can put the sensitive settings information in a different file just like all the other things up till now. Create a file <strong>settings/settings_secret.py</strong> with the content:</p>
+<pre><code>SECRET_KEY = ‘ABCD123456FGHI’</code></pre>
+<p>Now in your <strong>settings/settings.py</strong> file add the line</p>
+<pre><code>from settings_secret import *</code><code></code></pre>
+<p>Exclude the secret file from your source control (and possibly delete it from the history). Now you have a place to put your application credentials.</p>
+<p>&nbsp;</p>
+<h2>Concluding</h2>
+<p>Your once so simple single file setup has been changed to a myriad of files. But it should be easier to maintain, more secure and is better suited to deal with multiple environments. Just to have everything in one place. Here is a demo project with all the tricks mentioned above:</p>
+<p><a href="/wp-content/uploads/2015/10/settings_demo_app.zip">settings_demo_app.zip</a></p>
+]]></content:encoded>
+			<wfw:commentRss>/2015/10/setting-your-django-settings/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+		</item>
+		<item>
+		<title>API update -&gt; parameters</title>
+		<link>/2014/12/api-update-parameters/</link>
+		<comments>/2014/12/api-update-parameters/#comments</comments>
+		<pubDate>Mon, 22 Dec 2014 20:06:31 +0000</pubDate>
+		<dc:creator><![CDATA[rmoelker]]></dc:creator>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[api]]></category>
+
+		<guid isPermaLink="false">/?p=82</guid>
+		<description><![CDATA[The CodeCook development API has undergone some tweaks in the last weeks. First you will be able to authenticate using a HTTP header in addition to get request now. A second major change is listing the parameters used in a task/concept. This change makes it simpler for plugin makers to allow modifying the code snippet on the fly. So for example the counter loop task start, stop and body variables are passed when getting.. <a href="/2014/12/api-update-parameters/">Read More</a>]]></description>
+				<content:encoded><![CDATA[<p>The CodeCook development API has undergone some tweaks in the last weeks.</p>
+<p>First you will be able to authenticate using a HTTP header in addition to get request now.</p>
+<p>A second major change is listing the parameters used in a task/concept. This change makes it simpler for plugin makers to allow modifying the code snippet on the fly. So for example the <a href="http://codecook.io/python/1/counter-loop">counter loop task</a> <em>start</em>, <em>stop</em> and <em>body</em> variables are passed when getting the task using the API:</p>
+<pre><code>"parameters": [
+        {
+            "default": null,
+            "description": null,
+            "name": "start",
+            "resource_uri": ""
+        },
+        {
+            "default": null,
+            "description": null,
+            "name": "stop",
+            "resource_uri": ""
+        },
+        {
+            "default": null,
+            "description": null,
+            "name": "body",
+            "resource_uri": ""
+        }
+    ],</code></pre>
+<p>We&#8217;ll keep you posted on other changes.</p>
+<p><strong>Happy holidays</strong></p>
+]]></content:encoded>
+			<wfw:commentRss>/2014/12/api-update-parameters/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+		</item>
+		<item>
+		<title>Get domain, path, protocol and get parameters in Django template</title>
+		<link>/2014/11/get-domain-path-protocol-and-get-parameters-in-template/</link>
+		<comments>/2014/11/get-domain-path-protocol-and-get-parameters-in-template/#comments</comments>
+		<pubDate>Fri, 28 Nov 2014 16:20:24 +0000</pubDate>
+		<dc:creator><![CDATA[rmoelker]]></dc:creator>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[django]]></category>
+		<category><![CDATA[domain]]></category>
+		<category><![CDATA[path]]></category>
+		<category><![CDATA[URL]]></category>
+
+		<guid isPermaLink="false">/?p=54</guid>
+		<description><![CDATA[If you are a Django web developer you surely have found the need to use the sites domain name or absolute URL in a template. Django has a lot of functions and META keywords to do just that, but the features are spread out and lack a common interface. So, we have made a small tool/library to simplify the process of getting what you need from the complex URL/URI schema. What the fuzz?.. <a href="/2014/11/get-domain-path-protocol-and-get-parameters-in-template/">Read More</a>]]></description>
+				<content:encoded><![CDATA[<p>If you are a Django web developer you surely have found the need to use the sites domain name or absolute URL in a template. Django has a lot of functions and META keywords to do just that, but the features are spread out and lack a common interface. So, we have made a<a href="https://github.com/RRMoelker/django-full-url" target="_blank"> small tool/library</a> to simplify the process of getting what you need from the <a href="http://en.wikipedia.org/wiki/URI_scheme#Examples" target="_blank">complex URL/URI schema</a>.</p>
+<h3>What the fuzz?</h3>
+<p>So what exactly is the problem? Why would you need the full URL? And why not just always use relative paths, no domain needed?</p>
+<p>Well first, say you want to share the current page on a social network. And you don&#8217;t want bloated prefab share buttons but use <a href="/2014/11/static-social-share-buttons/" title="Permalink to Static social share buttons" class="">static share buttons</a>. You will need to get the current URL in you template code to use in the share link. And not just the relative path, but the full URL,<br />
+say: &#8220;http://example.com/news/2014/11/awesome-news/&#8221; instead of &#8220;/news/2014/11/awesome-news/&#8221;. Getting that URL is surprisingly poorly documented.</p>
+<p>Or say you want to send your users and email with your brand image in the header. If you simple use &#8220;<code>{% static "my_app/myexample.jpg" %}</code>&#8221; you&#8217;ll end up with a broken image if the user views the email outside of your web page. Why, because in their web mail viewer or native app the domain name is unkown. Solution? Add the domain name in front of the image path.</p>
+<p>So our <a href="https://github.com/RRMoelker/django-full-url" target="_blank">little library </a>should make it easy to get an URL in it&#8217;s entirety or just some parts of it. Say the user is looking at the URL: <code>http://localhost:8000/news/2014/?sort=ascending#item2<br />
+</code></p>
+<p>Using our library you can easily obtain the different parts such as:</p>
+<ul class="task-list">
+<li><strong>protocol</strong>: http://</li>
+<li><strong>domain</strong>: localhost:8000</li>
+<li><strong>port</strong>: 8000</li>
+<li><strong>path</strong>: /news/2014/</li>
+<li><strong>query</strong>: sort=ascending</li>
+<li><strong>full_url</strong>: /news/2014/?sort=ascending</li>
+<li><strong>absolute_uri</strong>: http://localhost:8000/news/2014/?sort=ascending</li>
+</ul>
+<p>To actually get these URL parts install the plugin and use either the context manager method or add the variables to the context yourself. For the rest of the text, we&#8217;ll assume you are using the context manager.</p>
+<h2>Full URL</h2>
+<p>If you want to share the current page you probably want to have access to the full URL in your template. If you want the protocol, domain and path <strong>without get parameters</strong> use:</p>
+<pre><code>{{url_parts.protocol}}{{url_parts.domain}}{{url_path}}</code></pre>
+<p>If you also want the <strong>get parameters</strong> you can use the simpler function:</p>
+<pre><code>{{url_parts.absolute_uri}}</code></pre>
+<p>Doing the latter is easy in Vanilla Django using  &#8220;build_absolute_uri&#8221;. The former requires you to add the domain and path after &#8220;http://&#8221; or &#8220;https://&#8221; depending whether the request is secured or not.</p>
+<h3>(re)direct your users after login</h3>
+<p>Note that if you want to use the current page to create a login button that redirects after authentication you will want to use the &#8220;full_url&#8221;. Your template code should look like:</p>
+<pre><code>{% url "login" %}?next={{url_parts.full_url}}</code></pre>
+<p>The default Django auth login view handles the redirect for you using the &#8220;next&#8221; get parameter.</p>
+<h2>Domain or host name</h2>
+<p>If you use a rendered template outside of your website you can&#8217;t just use relative paths. So you&#8217;ll need the domain name of the current site. The site framework does this for you, but it&#8217;s a hassle and prone to errors because configuration is stored in the database. To get the domain name in the template use:</p>
+<pre><code>{{url_parts.domain}}</code></pre>
+<p>Simple enough right? So if you for example use this to add an image in your outgoing emails, you&#8217;ll want to do:</p>
+<pre><code>&lt;img src="http://{{url_parts.domain}}{% static "img/my-brand-logo.png" %}" alt="My brand logo" /&gt;
+</code></pre>
+<h2>Protocol, port, query</h2>
+<p>Finally the infrequently required URL parts. In some rare cases you might want to extract some very specific information from the URL. You can obtain the protocol (&#8220;http://&#8221; or &#8220;https://&#8221;) by:</p>
+<pre><code>{{url_parts.protocol}}</code></pre>
+<p>The port can be extruded from the request is certain situations (not all) by:</p>
+<pre><code>{{url_parts.port}}</code></pre>
+<p>Finally you might just want to get the query part of the URL, you know, that part behind the &#8220;?&#8221; with the get parameters:</p>
+<pre><code>{{url_parts.query}}</code></pre>
+<h2>Convenient bits and pieces</h2>
+<p>So, what we aimed to create was a <a href="https://github.com/RRMoelker/django-full-url" target="_blank">small tool</a> that makes using URL bits and pieces a bit more convenient than the Django way. We use it on <a href="http://codecook.io" target="_blank">our site</a> for static share links, login redirects and email images. We hope you will be able to use it as well. And please let us know if you would like a feature or found a bug.</p>
+]]></content:encoded>
+			<wfw:commentRss>/2014/11/get-domain-path-protocol-and-get-parameters-in-template/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+		</item>
+		<item>
+		<title>Static social share buttons</title>
+		<link>/2014/11/static-social-share-buttons/</link>
+		<comments>/2014/11/static-social-share-buttons/#comments</comments>
+		<pubDate>Wed, 19 Nov 2014 11:27:11 +0000</pubDate>
+		<dc:creator><![CDATA[rmoelker]]></dc:creator>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[performance]]></category>
+		<category><![CDATA[share]]></category>
+		<category><![CDATA[social]]></category>
+
+		<guid isPermaLink="false">/?p=40</guid>
+		<description><![CDATA[Sick of the bloated social media buttons? Well, you should. They are a real performance hit! Simple share links add iframes,  perform additional request, trigger redraws and more. Luckily you can use normal links which aren&#8217;t always well explained in respective social development APIs. These are links to static share pages for Facebook, Twitter, Google+ and so on. The page to share possibly along with detailed information is added as get parameters. Have.. <a href="/2014/11/static-social-share-buttons/">Read More</a>]]></description>
+				<content:encoded><![CDATA[<p>Sick of the bloated social media buttons? Well, you should. They are a <a href="http://zurb.com/article/883/small-painful-buttons-why-social-media-bu" target="_blank">real performance hit</a>! Simple share links add iframes,  perform additional request, trigger redraws and more.</p>
+<p>Luckily you can use normal links which aren&#8217;t always well explained in respective social development APIs. These are links to static share pages for Facebook, Twitter, Google+ and so on. The page to share possibly along with detailed information is added as get parameters. <a href="http://codecook.io/html/128/static-share-link-for-social-network">Have a look</a> at some of the share links on <a href="http://codecook.io/html/128/static-share-link-for-social-network">our website</a>.  For a more complete list of available static share urls <a href="http://atlchris.com/1665/how-to-create-custom-share-buttons-for-all-the-popular-social-services/" target="_blank">see blog </a>.</p>
+<p>Of course these are just links. But you can style a link like any button. Think styling the link using some background color, adding padding, <a href="http://codecook.io/css/179/rounded-corners" target="_blank">making round borders</a> and using a <a href="http://socicon.com/" target="_blank">special font </a>to get a scaling icon.</p>
+<p>We&#8217;ve brought this all together in our pages to get lightweight yet potent share buttons. <a href="http://codecook.io/css/164/box-shadow">Check them out</a>! If you&#8217;re developing in Django you might also want to use the template tags in <a href="https://github.com/RRMoelker/django-static-share">this Django package</a>.</p>
+<p><a href="/wp-content/uploads/2014/11/share_btns_screenshot1.png"><img class="alignnone wp-image-51 size-full" src="/wp-content/uploads/2014/11/share_btns_screenshot1.png" alt="Task method share buttons codecook.io" width="408" height="234" /></a></p>
+]]></content:encoded>
+			<wfw:commentRss>/2014/11/static-social-share-buttons/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+		</item>
+		<item>
+		<title>The results are in!</title>
+		<link>/2014/11/the-results-are-in/</link>
+		<comments>/2014/11/the-results-are-in/#comments</comments>
+		<pubDate>Fri, 14 Nov 2014 13:05:02 +0000</pubDate>
+		<dc:creator><![CDATA[rmoelker]]></dc:creator>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[code]]></category>
+		<category><![CDATA[programming]]></category>
+		<category><![CDATA[snippet]]></category>
+		<category><![CDATA[survey]]></category>
+
+		<guid isPermaLink="false">/?p=29</guid>
+		<description><![CDATA[We&#8217;ve asked you to fill in a survey and almost 50 of you did. Thank you all! Below you can see the most interesting results using some colourful charts. We think developers waste a lot of time on a daily basis (through no fault of their own). As a developer, you often need to search for code,  copy-paste it into your own workspace and finally you need to modify it to suit your.. <a href="/2014/11/the-results-are-in/">Read More</a>]]></description>
+				<content:encoded><![CDATA[<p>We&#8217;ve asked you to fill in a <a href="https://rrmoelker.typeform.com/to/XyM2pu" target="_blank"><strong>survey</strong></a> and almost 50 of you did. <strong>Thank you</strong> all!</p>
+<p>Below you can see the most interesting results using some colourful charts.</p>
+<p>We think developers waste a lot of <strong>time</strong> on a daily basis (<em>through no fault of their own</em>). As a developer, you often need to search for code,  copy-paste it into your own workspace and finally you need to modify it to suit your own needs. The majority of you indicate that you recognize this pattern. And more than half of you look up code <strong>at least once a day</strong>.</p>
+<p><a href="/wp-content/uploads/2014/11/chart1.png"><img class="aligncenter wp-image-7 size-full" src="/wp-content/uploads/2014/11/chart1.png" alt="&quot;Do you recognize searching online for a code fragment?&quot; statistics. 65% absolutely, 35% somewhat, 0% not at all." width="605" height="340" /></a><a href="/wp-content/uploads/2014/11/chart2.png"><img class="aligncenter wp-image-8 size-full" src="/wp-content/uploads/2014/11/chart2.png" alt="&quot;Do people ook up?&quot; code statistics" width="605" height="340" /></a>If you often look up code snippets, we are working to make your work easier. We are trying to cut out the copy-paste and edit steps. As time progresses, more and more <a href="http://codecook.io/snippet-tool-workspace-integration">plugins</a> will be available to let you insert snippets directly in your work. <a href="http://codecook.io/snippet-tool-workspace-integration#sublime-text">The sublime plugin</a> is up and running. And a <strong>bash </strong>plugin is already in the pipeline. It turns out that you also frequently use sublime and bash, so we&#8217;re on the right track!</p>
+<p>Once the sublime and bash plugins work well, we&#8217;ll likely be moving on the next most frequently used product: &#8220;other&#8221;. Hmm, well, obviously we didn&#8217;t give you enough choices to pick from.<strong> Which did we miss? </strong>Probably: &#8220;Notepad&#8221;, &#8220;nano&#8221; and &#8220;the WordPress editor&#8221;, right?<strong><br />
+</strong></p>
+<p><a href="/wp-content/uploads/2014/11/chart4.png"><img class="aligncenter wp-image-10 size-full" src="/wp-content/uploads/2014/11/chart4.png" alt="Editor and shell usage statistics" width="605" height="340" /></a>Finally, <strong>the </strong><strong>languages </strong>you all use. The <strong>web languages</strong> take first place, followed by <strong>PHP</strong> and the <strong>jQuery</strong> library. We&#8217;ll push for the best experience for those languages first.</p>
+<p><a href="/wp-content/uploads/2014/11/chart3.png"><img class="aligncenter wp-image-9 size-full" src="/wp-content/uploads/2014/11/chart3.png" alt="chart3" width="605" height="340" /></a><strong>Great</strong> getting all the <strong>feedback</strong>. It&#8217;ll definitely help us to bring you the best experience. Thanks!</p>
+]]></content:encoded>
+			<wfw:commentRss>/2014/11/the-results-are-in/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+		</item>
+		<item>
+		<title>CodeCook.io blog is up</title>
+		<link>/2014/11/codecook-io-website/</link>
+		<comments>/2014/11/codecook-io-website/#comments</comments>
+		<pubDate>Fri, 14 Nov 2014 12:30:20 +0000</pubDate>
+		<dc:creator><![CDATA[rmoelker]]></dc:creator>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[site]]></category>
+
+		<guid isPermaLink="false">/?p=21</guid>
+		<description><![CDATA[Yes, our blog is up and running. We&#8217;ll be keeping you posted with the latest news and events surrounding the CodeCook.io website. As first order of business, we&#8217;ll get the most interesting results of the survey online. &#160;]]></description>
+				<content:encoded><![CDATA[<p>Yes, our blog is up and running. We&#8217;ll be keeping you posted with the latest news and events surrounding the <a title="CodeCook.io website" href="http://codecook.io">CodeCook.io website</a>.</p>
+<p>As first order of business, we&#8217;ll get the most interesting results of the survey online.</p>
+<p><a href="http://codecook.io"><img class="alignnone size-large wp-image-31" src="/wp-content/uploads/2014/11/linked_bg-1024x310.png" alt="linked_bg" width="604" height="182" /></a></p>
+<p>&nbsp;</p>
+]]></content:encoded>
+			<wfw:commentRss>/2014/11/codecook-io-website/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+		</item>
+	</channel>
+</rss>
+
+<!-- Performance optimized by W3 Total Cache. Learn more: http://www.w3-edge.com/wordpress-plugins/
+
+Page Caching using disk: enhanced
+Database Caching using disk
+Object Caching 522/665 objects using disk
+
+ Served from: blog.codecook.io @ 2016-10-13 18:55:39 by W3 Total Cache -->
